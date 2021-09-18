@@ -1,3 +1,5 @@
+const logger = require("../helpers/logger");
+
 module.exports = {
     name: 'interactionCreate',
     execute(interaction) {
