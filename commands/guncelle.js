@@ -16,6 +16,9 @@ module.exports = {
         .addStringOption(option => option.setName("show_name").setDescription("Detaylarını görmek istediğiniz seri adını girin.").setRequired(true))
         .addStringOption(option => option.setName("position").setDescription("Pozisyon bilgisini girin.")),
     async execute(interaction) {
+        if (!interaction.member.roles.cache.some(role => role.name === "Desch"))
+            return await interaction.reply({ content: `Bu komutu kullanma yetkiniz yok!`, ephemeral: true });
+
         const showName = interaction.options.getString("show_name")
         const position = interaction.options.getString("position")
 
@@ -166,8 +169,6 @@ module.exports = {
                             { name: "Yayın Tarihi", value: moment(episodeData.air_date).fromNow().toString(), inline: true },
                             { name: "Emektarlar", value: episodeData.staff.map(staff => `${staff.position.acronym}: ${staff.member.name}`).join("\n"), inline: true }
                         )
-
-                    console.log(groupEmbed)
 
                     return await interaction.editReply({
                         content: "-", ephemeral: true, embeds: [groupEmbed]

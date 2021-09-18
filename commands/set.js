@@ -7,6 +7,9 @@ module.exports = {
         .setDescription('Discord kanalınızla DESCHTIMES API keyinizi eşleştirin.')
         .addStringOption(option => option.setName("deschtimes_api_key").setDescription("API keyinizi girin.").setRequired(true)),
     async execute(interaction) {
+        if (!interaction.member.roles.cache.some(role => role.name === "Desch"))
+            return await interaction.reply({ content: `Bu komutu kullanma yetkiniz yok!`, ephemeral: true });
+
         const deschtimesApiKey = interaction.options.getString("deschtimes_api_key")
 
         const result = await ApiKeys.findOne({
