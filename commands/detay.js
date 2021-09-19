@@ -3,6 +3,7 @@ const { MessageEmbed } = require('discord.js');
 const { ApiKeys } = require('../db');
 const axios = require("axios");
 const moment = require("moment")
+const slugify = require('slugify')
 const season_langMap = require('../helpers/season_lang.map');
 
 moment.locale("tr")
@@ -17,6 +18,8 @@ module.exports = {
         const showName = interaction.options.getString("show_name")
         const episodeNumber = interaction.options.getString("episode_number")
 
+        await interaction.reply({ content: 'https://i.imgur.com/T9qCrmB.gif' });
+
         const group = await ApiKeys.findOne({
             where: {
                 discordGuildId: interaction.guild.id
@@ -24,11 +27,11 @@ module.exports = {
         })
 
         if (!group) {
-            return await interaction.reply({ content: `Discord sunucunuzla eşleşmiş bir API key bulunamadı. Lütfen /set komutuyla eşleştirme yapın.`, ephemeral: true });
+            return await interaction.editReply({ content: `Discord sunucunuzla eşleşmiş bir API key bulunamadı. Lütfen /set komutuyla eşleştirme yapın.`, ephemeral: true });
         }
 
         if (!showName && episodeNumber) {
-            return await interaction.reply({ content: `Bölüm detaylarına bakmak için seri ismini girmeniz gerekiyor.`, ephemeral: true });
+            return await interaction.editReply({ content: `Bölüm detaylarına bakmak için seri ismini girmeniz gerekiyor.`, ephemeral: true });
         }
 
         if (!showName) {
@@ -39,7 +42,7 @@ module.exports = {
             const groupEmbed = new MessageEmbed()
                 .setColor("#8A00C0")
                 .setTitle(data.name)
-                .setURL(`https://deschtimes.com/groups/${data.acronym}`)
+                .setURL(`https://deschtimes.com/groups/${slugify(data.name)}`)
                 .setThumbnail(data.icon)
                 .setFooter(interaction.client.user.username, `https://cdn.discordapp.com/avatars/${process.env.BOT_CLIENT_ID}/${interaction.client.user.avatar}.webp`)
                 .setTimestamp()
@@ -47,8 +50,8 @@ module.exports = {
                     { name: "Seri Sayısı", value: String(data.shows.length) }
                 )
 
-            return await interaction.reply({
-                ephemeral: true, embeds: [groupEmbed]
+            return await interaction.editReply({
+                content: "-", ephemeral: true, embeds: [groupEmbed]
             });
         } else if (showName && !episodeNumber) {
             const groupData = await axios.get(`${process.env.DESCHTIMES_API_PATH}/groups/${group.deschtimesApiKey}.json`)
@@ -59,7 +62,7 @@ module.exports = {
             const groupEmbed = new MessageEmbed()
                 .setColor("#8A00C0")
                 .setTitle(data.name)
-                .setURL(`https://deschtimes.com/groups/${groupData.data.acronym}/shows/${data.id}`)
+                .setURL(`https://deschtimes.com/groups/${slugify(groupData.data.name)}/shows/${data.id}`)
                 .setThumbnail(data.poster)
                 .setFooter(interaction.client.user.username, `https://cdn.discordapp.com/avatars/${process.env.BOT_CLIENT_ID}/${interaction.client.user.avatar}.webp`)
                 .setTimestamp()
@@ -69,8 +72,8 @@ module.exports = {
                     { name: "Bölüm Sayısı", value: String(data.episodes.length), inline: true }
                 )
 
-            return await interaction.reply({
-                ephemeral: true, embeds: [groupEmbed]
+            return await interaction.editReply({
+                content: "-", ephemeral: true, embeds: [groupEmbed]
             });
         } else {
             const groupData = await axios.get(`${process.env.DESCHTIMES_API_PATH}/groups/${group.deschtimesApiKey}.json`)
@@ -84,7 +87,7 @@ module.exports = {
                     const groupEmbed = new MessageEmbed()
                         .setColor("#8A00C0")
                         .setTitle(`${data.name} - ${episodeData.number}. Bölüm`)
-                        .setURL(`https://deschtimes.com/groups/${groupData.data.acronym}/shows/${data.id}/episodes/${episodeData.id}`)
+                        .setURL(`https://deschtimes.com/groups/${slugify(groupData.data.name)}/shows/${data.id}/episodes/${episodeData.id}`)
                         .setThumbnail(data.poster)
                         .setFooter(interaction.client.user.username, `https://cdn.discordapp.com/avatars/${process.env.BOT_CLIENT_ID}/${interaction.client.user.avatar}.webp`)
                         .setTimestamp()
@@ -96,11 +99,11 @@ module.exports = {
                         )
 
                     return await interaction.reply({
-                        ephemeral: true, embeds: [groupEmbed]
+                        content: "-", ephemeral: true, embeds: [groupEmbed]
                     });
                 }
             }
-            return await interaction.reply({ content: `Aradığınız bölüm detaylarına ulaşılamadı.`, ephemeral: true });
+            return await interaction.editReply({ content: `Aradığınız bölüm detaylarına ulaşılamadı.`, ephemeral: true });
 
         }
     },

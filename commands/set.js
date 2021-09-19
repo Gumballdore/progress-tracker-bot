@@ -12,6 +12,8 @@ module.exports = {
 
         const deschtimesApiKey = interaction.options.getString("deschtimes_api_key")
 
+        await interaction.reply({ content: 'https://i.imgur.com/T9qCrmB.gif', ephemeral: true });
+
         const result = await ApiKeys.findOne({
             where: {
                 "discordGuildId": interaction.guild.id
@@ -23,7 +25,7 @@ module.exports = {
                 deschtimesApiKey,
                 "discordGuildId": interaction.guild.id
             })
-            return await interaction.reply({ content: `${interaction.guild.name} için API key eşleştirilmesi yapıldı.`, ephemeral: true });
+            return await interaction.editReply({ content: `${interaction.guild.name} için API key eşleştirilmesi yapıldı.`, ephemeral: true });
         }
 
         if (result.deschtimesApiKey !== deschtimesApiKey)
@@ -35,6 +37,6 @@ module.exports = {
                 }
             })
 
-        return await interaction.reply({ content: `${interaction.guild.name} için API key eşleştirilmesi yapıldı.`, ephemeral: true });
+        return await interaction.editReply({ content: `${interaction.guild.name} için API key eşleştirilmesi yapıldı.`, ephemeral: true });
     },
 };

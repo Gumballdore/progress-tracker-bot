@@ -12,6 +12,7 @@
         "dotenv": "^10.0.0",
         "moment": "^2.29.1",
         "sequelize": "^6.6.5",
+        "slugify": "^1.6.0",
         "sqlite3": "^5.0.2",
         "winston": "^3.3.3"
     },

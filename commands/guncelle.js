@@ -3,9 +3,9 @@ const { MessageEmbed } = require('discord.js');
 const { ApiKeys } = require('../db');
 const axios = require("axios");
 const moment = require("moment")
-const progress_langMap = require('../helpers/progress_lang.map');
 const season_langMap = require('../helpers/season_lang.map');
 const logger = require('../helpers/logger');
+const { default: slugify } = require('slugify');
 
 moment.locale("tr")
 
@@ -19,8 +19,12 @@ module.exports = {
         if (!interaction.member.roles.cache.some(role => role.name === "Desch"))
             return await interaction.reply({ content: `Bu komutu kullanma yetkiniz yok!`, ephemeral: true });
 
+        let groupData, showData
+
         const showName = interaction.options.getString("show_name")
         const position = interaction.options.getString("position")
+
+        await interaction.reply({ content: 'https://i.imgur.com/T9qCrmB.gif', ephemeral: true });
 
         const group = await ApiKeys.findOne({
             where: {
@@ -29,33 +33,32 @@ module.exports = {
         })
 
         if (!group) {
-            return await interaction.reply({ content: `Discord sunucunuzla eşleşmiş bir API key bulunamadı. Lütfen /set komutuyla eşleştirme yapın.`, ephemeral: true });
+            return await interaction.editReply({ content: `Discord sunucunuzla eşleşmiş bir API key bulunamadı. Lütfen /set komutuyla eşleştirme yapın.`, ephemeral: true });
         }
 
         if (!showName) {
-            return await interaction.reply({ content: `Seri güncellemek için seri ismi girmeniz gerekiyor.`, ephemeral: true });
+            return await interaction.editReply({ content: `Seri güncellemek için seri ismi girmeniz gerekiyor.`, ephemeral: true });
         }
 
-        const groupData = await axios.get(`${process.env.DESCHTIMES_API_PATH}/groups/${group.deschtimesApiKey}.json`).catch(
-            async err => {
+        try {
+            groupData = await axios.get(`${process.env.DESCHTIMES_API_PATH}/groups/${group.deschtimesApiKey}.json`)
+        } catch (err) {
+            logger.error({
+                message: err.toString()
+            })
+            return await interaction.editReply({ content: `Grup bilgilerini alırken bir sorunla karşılaştık.`, ephemeral: true });
+        }
+
+        // If user didn't specified position, update episode status -> released: true or false
+        if (!position) {
+            try {
+                showData = await axios.get(`${process.env.DESCHTIMES_API_PATH}/groups/${group.deschtimesApiKey}/shows/${showName}.json`)
+            } catch (err) {
                 logger.error({
                     message: err.toString()
                 })
-                return await interaction.reply({ content: `Grup bilgilerini alırken bir sorunla karşılaştık.`, ephemeral: true });
+                return await interaction.editReply({ content: `Seri bilgilerini alırken bir sorunla karşılaştık. Seri ismini yanlış girmiş olabilirsiniz.`, ephemeral: true });
             }
-        )
-
-        await interaction.reply({ content: 'Working on it', ephemeral: true });
-
-        if (!position) {
-            let showData = await axios.get(`${process.env.DESCHTIMES_API_PATH}/groups/${group.deschtimesApiKey}/shows/${showName}.json`).catch(
-                async _ => {
-                    logger.error({
-                        message: err.toString()
-                    })
-                    return await interaction.editReply({ content: `Seri bilgilerini alırken bir sorunla karşılaştık. Seri ismini yanlış girmiş olabilirsiniz.`, ephemeral: true });
-                }
-            )
 
             const fEpisode = showData.data.episodes.find(show => !show.released)
             if (!fEpisode.id)
@@ -65,23 +68,23 @@ module.exports = {
                 member: interaction.user.id
             }
 
-            await axios.patch(`${process.env.DESCHTIMES_API_PATH}/groups/${group.deschtimesApiKey}/shows/${showName}/episodes.json`, body).catch(
-                async err => {
-                    logger.error({
-                        message: err.toString()
-                    })
-                    return await interaction.editReply({ content: err?.response?.data?.message || `Seriyi güncellerken bir hatayla karşılaştık.`, ephemeral: true });
-                }
-            )
+            try {
+                await axios.patch(`${process.env.DESCHTIMES_API_PATH}/groups/${group.deschtimesApiKey}/shows/${showName}/episodes.json`, body)
+            } catch (err) {
+                logger.error({
+                    message: err.toString()
+                })
+                return await interaction.editReply({ content: err?.response?.data?.message || `Seriyi güncellerken bir hatayla karşılaştık.`, ephemeral: true });
+            }
 
-            showData = await axios.get(`${process.env.DESCHTIMES_API_PATH}/groups/${group.deschtimesApiKey}/shows/${showName}.json`).catch(
-                async _ => {
-                    logger.error({
-                        message: err.toString()
-                    })
-                    return await interaction.editReply({ content: `Seri bilgilerini alırken bir sorunla karşılaştık. Seri ismini yanlış girmiş olabilirsiniz.`, ephemeral: true });
-                }
-            )
+            try {
+                showData = await axios.get(`${process.env.DESCHTIMES_API_PATH}/groups/${group.deschtimesApiKey}/shows/${showName}.json`)
+            } catch (err) {
+                logger.error({
+                    message: err.toString()
+                })
+                return await interaction.editReply({ content: `Seri bilgilerini alırken bir sorunla karşılaştık. Seri ismini yanlış girmiş olabilirsiniz.`, ephemeral: true });
+            }
 
             const { data } = showData
             for (let episode in data.episodes) {
@@ -91,7 +94,7 @@ module.exports = {
                     const groupEmbed = new MessageEmbed()
                         .setColor("#8A00C0")
                         .setTitle(`${data.name} - ${episodeData.number}. Bölüm`)
-                        .setURL(`https://deschtimes.com/groups/${groupData.data.acronym}/shows/${data.id}/episodes/${episodeData.id}`)
+                        .setURL(`https://deschtimes.com/groups/${slugify(groupData.data.name)}/shows/${data.id}/episodes/${episodeData.id}`)
                         .setThumbnail(data.poster)
                         .setFooter(interaction.client.user.username, `https://cdn.discordapp.com/avatars/${process.env.BOT_CLIENT_ID}/${interaction.client.user.avatar}.webp`)
                         .setTimestamp()
@@ -109,15 +112,17 @@ module.exports = {
             }
 
             return await interaction.editReply({ content: err?.response?.data?.message || `Seriyi güncellerken bir hatayla karşılaştık.`, ephemeral: true });
-        } else {
-            let showData = await axios.get(`${process.env.DESCHTIMES_API_PATH}/groups/${group.deschtimesApiKey}/shows/${showName}.json`).catch(
-                async _ => {
-                    logger.error({
-                        message: err.toString()
-                    })
-                    return await interaction.editReply({ content: `Seri bilgilerini alırken bir sorunla karşılaştık. Seri ismini yanlış girmiş olabilirsiniz.`, ephemeral: true });
-                }
-            )
+        }
+        // If user did specified position, update the finished for that position
+        else {
+            try {
+                showData = await axios.get(`${process.env.DESCHTIMES_API_PATH}/groups/${group.deschtimesApiKey}/shows/${showName}.json`)
+            } catch (err) {
+                logger.error({
+                    message: err.toString()
+                })
+                return await interaction.editReply({ content: `Seri bilgilerini alırken bir sorunla karşılaştık. Seri ismini yanlış girmiş olabilirsiniz.`, ephemeral: true });
+            }
 
             const fEpisode = showData.data.episodes.find(show => !show.released)
             if (!fEpisode.id)
@@ -142,14 +147,14 @@ module.exports = {
                 }
             )
 
-            showData = await axios.get(`${process.env.DESCHTIMES_API_PATH}/groups/${group.deschtimesApiKey}/shows/${showName}.json`).catch(
-                async _ => {
-                    logger.error({
-                        message: err.toString()
-                    })
-                    return await interaction.editReply({ content: `Seri bilgilerini alırken bir sorunla karşılaştık. Seri ismini yanlış girmiş olabilirsiniz.`, ephemeral: true });
-                }
-            )
+            try {
+                showData = await axios.get(`${process.env.DESCHTIMES_API_PATH}/groups/${group.deschtimesApiKey}/shows/${showName}.json`)
+            } catch (err) {
+                logger.error({
+                    message: err.toString()
+                })
+                return await interaction.editReply({ content: `Seri bilgilerini alırken bir sorunla karşılaştık. Seri ismini yanlış girmiş olabilirsiniz.`, ephemeral: true });
+            }
 
             const { data } = showData
             for (let episode in data.episodes) {
@@ -159,7 +164,7 @@ module.exports = {
                     const groupEmbed = new MessageEmbed()
                         .setColor("#8A00C0")
                         .setTitle(`${data.name} - ${episodeData.number}. Bölüm`)
-                        .setURL(`https://deschtimes.com/groups/${groupData.data.acronym}/shows/${data.id}/episodes/${episodeData.id}`)
+                        .setURL(`https://deschtimes.com/groups/${slugify(groupData.data.name)}/shows/${data.id}/episodes/${episodeData.id}`)
                         .setThumbnail(data.poster)
                         .setFooter(interaction.client.user.username, `https://cdn.discordapp.com/avatars/${process.env.BOT_CLIENT_ID}/${interaction.client.user.avatar}.webp`)
                         .setTimestamp()
