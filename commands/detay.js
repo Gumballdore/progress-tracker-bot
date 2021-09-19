@@ -98,7 +98,7 @@ module.exports = {
                             { name: "Emektarlar", value: episodeData.staff.map(staff => `${staff.position.acronym}: ${staff.member.name}`).join("\n"), inline: true }
                         )
 
-                    return await interaction.reply({
+                    return await interaction.editReply({
                         content: "-", ephemeral: true, embeds: [groupEmbed]
                     });
                 }
