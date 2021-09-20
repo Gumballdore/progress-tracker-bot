@@ -12,6 +12,8 @@ module.exports = {
         if (messageArr[messageArr.length - 1] === "nerde" || messageArr[messageArr.length - 1] === "nerede") {
             messageArr.pop()
 
+            if (!messageArr.length) return
+
             const showName = messageArr.join(" ")
 
             let groupData, showData
