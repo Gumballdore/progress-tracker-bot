@@ -5,6 +5,7 @@ const axios = require("axios");
 const moment = require("moment")
 const slugify = require('slugify')
 const season_langMap = require('../helpers/season_lang.map');
+const progress_langMap = require('../helpers/progress_lang.map');
 
 moment.locale("tr")
 
@@ -69,6 +70,7 @@ module.exports = {
                 .addFields(
                     { name: "Ortak Grup", value: data.joint_groups.length ? data.joint_groups.length.map(group => group) : "Bulunamadı.", inline: true },
                     { name: "Durum", value: data.status ? data.status : "Bulunamadı.", inline: true },
+                    { name: "Hâl", value: progress_langMap[data.premiered], inline: true },
                     { name: "Bölüm Sayısı", value: String(data.episodes.length), inline: true }
                 )
 
