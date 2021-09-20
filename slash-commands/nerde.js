@@ -44,7 +44,7 @@ module.exports = {
         let fEpisode = showData.data.episodes.find(show => !show.released)
         if (!fEpisode?.id && !showData.data.episodes[showData.data.episodes.length - 1].released) {
             return await interaction.editReply({ content: `İstediğiniz bölüm bulunamadı.`, ephemeral: true });
-        } else {
+        } else if (!fEpisode?.id) {
             fEpisode = showData.data.episodes[showData.data.episodes.length - 1]
         }
 
