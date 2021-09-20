@@ -70,7 +70,7 @@ module.exports = {
                 .addFields(
                     { name: "Ortak Grup", value: data.joint_groups.length ? data.joint_groups.length.map(group => group) : "Bulunamadı.", inline: true },
                     { name: "Durum", value: data.status ? data.status : "Bulunamadı.", inline: true },
-                    { name: "Hâl", value: progress_langMap[data.premiered], inline: true },
+                    { name: "Hâl", value: progress_langMap[data.progress], inline: true },
                     { name: "Bölüm Sayısı", value: String(data.episodes.length), inline: true }
                 )
 
