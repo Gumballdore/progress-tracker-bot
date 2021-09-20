@@ -41,9 +41,13 @@ module.exports = {
                 return await msg.edit({ content: err?.response?.data?.message || `Bilgileri alırken bir sorunla karşılaştık.`, ephemeral: true });
             }
 
-            const fEpisode = showData.data.episodes.find(show => !show.released)
-            if (!fEpisode.id)
+            let fEpisode = showData.data.episodes.find(show => !show.released)
+            if (!fEpisode?.id && !showData.data.episodes[showData.data.episodes.length - 1].released) {
                 return await msg.edit({ content: `İstediğiniz bölüm bulunamadı.`, ephemeral: true });
+            } else {
+                fEpisode = showData.data.episodes[showData.data.episodes.length - 1]
+            }
+
 
             const { data } = showData
             for (let episode in data.episodes) {
