@@ -4,7 +4,7 @@ const { ApiKeys } = require('../db');
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('set')
-        .setDescription('Discord kanalınızla DESCHTIMES API keyinizi eşleştirin.')
+        .setDescription('Discord kanalınızla Deschtimes API keyinizi eşleştirin.')
         .addStringOption(option => option.setName("deschtimes_api_key").setDescription("API keyinizi girin.").setRequired(true)),
     async execute(interaction) {
         if (!interaction.member.roles.cache.some(role => role.name === "Desch"))

@@ -1,12 +1,7 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
-const { MessageEmbed } = require('discord.js');
 const { ApiKeys } = require('../db');
 const axios = require("axios");
-const moment = require("moment")
-const season_langMap = require('../helpers/season_lang.map');
-const { default: slugify } = require('slugify');
-
-moment.locale("tr")
+const nerdeEmbed = require('../embeds/nerde_embed')
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -53,19 +48,7 @@ module.exports = {
             if (data.episodes[episode].number == fEpisode.number) {
                 const episodeData = data.episodes[episode]
 
-                const groupEmbed = new MessageEmbed()
-                    .setColor("#8A00C0")
-                    .setTitle(`${data.name} - ${episodeData.number}. Bölüm`)
-                    .setURL(`https://deschtimes.com/groups/${slugify(groupData.data.name)}/shows/${data.id}/episodes/${episodeData.id}`)
-                    .setThumbnail(data.poster)
-                    .setFooter(interaction.client.user.username, `https://cdn.discordapp.com/avatars/${process.env.BOT_CLIENT_ID}/${interaction.client.user.avatar}.webp`)
-                    .setTimestamp()
-                    .addFields(
-                        { name: `Durum - ${episodeData.released ? "Yayınlandı" : "Yayınlanmadı"}`, value: episodeData.staff.map(staff => staff.finished ? `~~${staff.position.acronym}~~` : `**${staff.position.acronym}**`).join(" ") },
-                        { name: "Sezon", value: season_langMap(episodeData.season), inline: true },
-                        { name: "Yayın Tarihi", value: moment(episodeData.air_date).fromNow().toString(), inline: true },
-                        { name: "Emektarlar", value: episodeData.staff.map(staff => `${staff.position.acronym}: ${staff.member.name}`).join("\n"), inline: true }
-                    )
+                const groupEmbed = nerdeEmbed({ data, episodeData, groupData, interaction })
 
                 return await interaction.editReply({
                     content: "-", embeds: [groupEmbed]

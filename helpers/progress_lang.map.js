@@ -1,4 +1,5 @@
 module.exports = {
-    "Incomplete": "Devam ediyor",
+    "Incomplete": "Tamamlanmadı",
+    "Airing": "Devam ediyor",
     "Complete": "Tamamlandı"
 }

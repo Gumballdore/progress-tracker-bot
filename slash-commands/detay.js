@@ -4,15 +4,15 @@ const { ApiKeys } = require('../db');
 const axios = require("axios");
 const moment = require("moment")
 const slugify = require('slugify')
-const season_langMap = require('../helpers/season_lang.map');
 const progress_langMap = require('../helpers/progress_lang.map');
+const nerdeEmbed = require('../embeds/nerde_embed');
 
 moment.locale("tr")
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('detay')
-        .setDescription('DESCHTIMES\'daki grubunuz ya da serileriniz hakkında detay alın.')
+        .setDescription('Deschtimes\'daki grubunuz ya da serileriniz hakkında detay alın.')
         .addStringOption(option => option.setName("show_name").setDescription("Detaylarını görmek istediğiniz seri adını girin."))
         .addStringOption(option => option.setName("episode_number").setDescription("Detaylarını görmek istediğiniz bölüm numarasını girin.")),
     async execute(interaction) {
@@ -69,9 +69,9 @@ module.exports = {
                 .setTimestamp()
                 .addFields(
                     { name: "Ortak Grup", value: data.joint_groups.length ? data.joint_groups.length.map(group => group) : "Bulunamadı.", inline: true },
-                    { name: "Durum", value: data.status ? data.status : "Bulunamadı.", inline: true },
-                    { name: "Hâl", value: progress_langMap[data.progress], inline: true },
-                    { name: "Bölüm Sayısı", value: String(data.episodes.length), inline: true }
+                    { name: "Yayım Durumu", value: progress_langMap[data.progress], inline: true },
+                    { name: "Bölüm Sayısı", value: String(data.episodes.length), inline: true },
+                    { name: "Ek Notlar", value: data.status ? data.status : "Bulunamadı." }
                 )
 
             return await interaction.editReply({
@@ -86,19 +86,7 @@ module.exports = {
                 if (data.episodes[episode].number == episodeNumber) {
                     const episodeData = data.episodes[episode]
 
-                    const groupEmbed = new MessageEmbed()
-                        .setColor("#8A00C0")
-                        .setTitle(`${data.name} - ${episodeData.number}. Bölüm`)
-                        .setURL(`https://deschtimes.com/groups/${slugify(groupData.data.name)}/shows/${data.id}/episodes/${episodeData.id}`)
-                        .setThumbnail(data.poster)
-                        .setFooter(interaction.client.user.username, `https://cdn.discordapp.com/avatars/${process.env.BOT_CLIENT_ID}/${interaction.client.user.avatar}.webp`)
-                        .setTimestamp()
-                        .addFields(
-                            { name: `Durum - ${episodeData.released ? "Yayınlandı" : "Yayınlanmadı"}`, value: episodeData.staff.map(staff => staff.finished ? `~~${staff.position.acronym}~~` : `**${staff.position.acronym}**`).join(" ") },
-                            { name: "Sezon", value: season_langMap(episodeData.season), inline: true },
-                            { name: "Yayın Tarihi", value: moment(episodeData.air_date).fromNow().toString(), inline: true },
-                            { name: "Emektarlar", value: episodeData.staff.map(staff => `${staff.position.acronym}: ${staff.member.name}`).join("\n"), inline: true }
-                        )
+                    const groupEmbed = nerdeEmbed({ data, episodeData, groupData, interaction })
 
                     return await interaction.editReply({
                         content: "-", ephemeral: true, embeds: [groupEmbed]

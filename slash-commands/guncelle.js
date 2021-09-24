@@ -12,7 +12,7 @@ moment.locale("tr")
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('guncelle')
-        .setDescription('DESCHTIMES\'daki bölümlerini güncelleyin.')
+        .setDescription('Deschtimes\'daki bölümlerinizi güncelleyin.')
         .addStringOption(option => option.setName("show_name").setDescription("Detaylarını görmek istediğiniz seri adını girin.").setRequired(true))
         .addStringOption(option => option.setName("position").setDescription("Pozisyon bilgisini girin.")),
     async execute(interaction) {
