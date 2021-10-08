@@ -141,14 +141,14 @@ module.exports = {
                 episode_number: episodeNumber || undefined
             }
 
-            await axios.patch(`${process.env.DESCHTIMES_API_PATH}/groups/${group.deschtimesApiKey}/shows/${showName}/staff.json`, body).catch(
-                async err => {
-                    logger.error({
-                        message: err.toString()
-                    })
-                    return await interaction.editReply({ content: err?.response?.data?.message || `Seriyi güncellerken bir hatayla karşılaştık.`, ephemeral: true });
-                }
-            )
+            try {
+                await axios.patch(`${process.env.DESCHTIMES_API_PATH}/groups/${group.deschtimesApiKey}/shows/${showName}/staff.json`, body)
+            } catch (err) {
+                logger.error({
+                    message: err.toString()
+                })
+                return await interaction.editReply({ content: err?.response?.data?.message || `Seriyi güncellerken bir hatayla karşılaştık.`, ephemeral: true });
+            }
 
             try {
                 showData = await axios.get(`${process.env.DESCHTIMES_API_PATH}/groups/${group.deschtimesApiKey}/shows/${showName}.json`)
@@ -161,7 +161,7 @@ module.exports = {
 
             const { data } = showData
             for (let episode in data.episodes) {
-                if (data.episodes[episode].number == fEpisode.number) {
+                if (data.episodes[episode].number == (episodeNumber || fEpisode.number)) {
                     const episodeData = data.episodes[episode]
 
                     const groupEmbed = new MessageEmbed()
@@ -172,7 +172,7 @@ module.exports = {
                         .setFooter(interaction.client.user.username, `https://cdn.discordapp.com/avatars/${process.env.BOT_CLIENT_ID}/${interaction.client.user.avatar}.webp`)
                         .setTimestamp()
                         .addFields(
-                            { name: `Durum - ${episodeData.released ? "Yayınlandı" : "Yayınlanmadı"}`, value: episodeData.staff.map(staff => staff.finished ? `~~**${staff.position.acronym}**~~` : `**${staff.position.acronym}**`).join(" ") },
+                            { name: `Durum - ${episodeData.released ? "Yayınlandı" : "Yayınlanmadı"}`, value: episodeData.staff.map(staff => staff.finished ? `~~${staff.position.acronym}~~` : `**${staff.position.acronym}**`).join(" ") },
                             { name: "Sezon", value: season_langMap(episodeData.season), inline: true },
                             { name: "Yayın Tarihi", value: moment(episodeData.air_date).fromNow().toString(), inline: true },
                             { name: "Emektarlar", value: episodeData.staff.map(staff => `${staff.position.acronym}: ${staff.member.name}`).join("\n"), inline: true }
