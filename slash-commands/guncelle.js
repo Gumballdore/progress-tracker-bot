@@ -13,7 +13,8 @@ module.exports = {
     data: new SlashCommandBuilder()
         .setName('guncelle')
         .setDescription('Deschtimes\'daki bölümlerinizi güncelleyin.')
-        .addStringOption(option => option.setName("show_name").setDescription("Detaylarını görmek istediğiniz seri adını girin.").setRequired(true))
+        .addStringOption(option => option.setName("show_name").setDescription("Güncellemek istediğiniz seri adını girin.").setRequired(true))
+        .addStringOption(option => option.setName("episode_number").setDescription("Güncellemek istediğiniz bölüm numarasını girin."))
         .addStringOption(option => option.setName("position").setDescription("Pozisyon bilgisini girin.")),
     async execute(interaction) {
         if (!interaction.member.roles.cache.some(role => role.name === "Desch"))
@@ -22,6 +23,7 @@ module.exports = {
         let groupData, showData
 
         const showName = interaction.options.getString("show_name")
+        const episodeNumber = interaction.options.getString("episode_number")
         const position = interaction.options.getString("position")
 
         await interaction.reply({ content: 'https://i.imgur.com/T9qCrmB.gif', ephemeral: true });
@@ -135,7 +137,8 @@ module.exports = {
             const body = {
                 member: interaction.user.id,
                 position,
-                finished: !staff.finished
+                finished: !staff.finished,
+                episode_number: episodeNumber || undefined
             }
 
             await axios.patch(`${process.env.DESCHTIMES_API_PATH}/groups/${group.deschtimesApiKey}/shows/${showName}/staff.json`, body).catch(
