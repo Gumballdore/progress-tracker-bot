@@ -24,7 +24,7 @@ module.exports = {
 
         const showName = interaction.options.getString("show_name")
         const episodeNumber = interaction.options.getString("episode_number")
-        const position = interaction.options.getString("position")
+        const position = interaction.options.getString("position").toUpperCase()
 
         await interaction.reply({ content: 'https://i.imgur.com/T9qCrmB.gif', ephemeral: true });
 
@@ -126,7 +126,7 @@ module.exports = {
                 return await interaction.editReply({ content: `Seri bilgilerini alırken bir sorunla karşılaştık. Seri ismini yanlış girmiş olabilirsiniz.`, ephemeral: true });
             }
 
-            const fEpisode = showData.data.episodes.find(show => !show.released)
+            const fEpisode = showData.data.episodes.find(show => episodeNumber ? show.number == episodeNumber : !show.released)
             if (!fEpisode.id)
                 return await interaction.editReply({ content: `İstediğiniz bölüm bulunamadı.`, ephemeral: true });
 
@@ -136,7 +136,7 @@ module.exports = {
 
             const body = {
                 member: interaction.user.id,
-                position,
+                position: position,
                 finished: !staff.finished,
                 episode_number: episodeNumber || undefined
             }
