@@ -24,7 +24,7 @@ module.exports = {
 
         const showName = interaction.options.getString("show_name")
         const episodeNumber = interaction.options.getString("episode_number")
-        const position = interaction.options.getString("position").toUpperCase()
+        const position = interaction.options.getString("position")?.toUpperCase()
 
         await interaction.reply({ content: 'https://i.imgur.com/T9qCrmB.gif', ephemeral: true });
 
